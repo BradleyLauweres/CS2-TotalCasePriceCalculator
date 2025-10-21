@@ -1,14 +1,7 @@
 ﻿using System.Collections.ObjectModel;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using System.IO;
 
 namespace CS2TotalCasePriceCalc
 {
@@ -24,8 +17,15 @@ namespace CS2TotalCasePriceCalc
         public MainWindow()
         {
             InitializeComponent();
+        }
 
-     
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            InitializeData();
+        }
+
+        private void InitializeData()
+        {
             CaseItems = new ObservableCollection<CaseItem>
             {
              new CaseItem { CaseName = "Austin 2025 Contenders Autograph Capsule", Quantity = 1 },
@@ -38,7 +38,7 @@ namespace CS2TotalCasePriceCalc
              new CaseItem { CaseName = "Recoil Case", Quantity = 16 },
              new CaseItem { CaseName = "Revolution Case", Quantity = 8 },
              new CaseItem { CaseName = "Revolver Case", Quantity = 1 },
-             new CaseItem { CaseName = "Paris 2023 Legends Sticker Capsule", Quantity = 2 }
+             new CaseItem { CaseName = "Paris 2023 Legends Sticker Capsule", Quantity = 2 },
 
             };
 
@@ -56,9 +56,27 @@ namespace CS2TotalCasePriceCalc
 
             decimal total = await _calculator.CalculateTotalAsync(dict);
 
+            try
+            {
+                string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                string logFilePath = Path.Combine(documentsPath, "CaseValueHistory.txt");
+                string logEntry = $"{DateTime.Now:dd-MM-yyyy HH:mm:ss} - Total Value: €{total:F2}{Environment.NewLine}";
+                await File.AppendAllTextAsync(logFilePath, logEntry);
+            }
+            catch (Exception ex)
+            {
+                ResultText.Text = $"Value: €{total:F2} (Failed to save log)";
+            }
+
             ProgressBar.Visibility = Visibility.Collapsed;
-            ResultText.Text = $"Your total case value: €{total:F2}";
+
+            if (ResultText.Text.StartsWith("Fetching"))
+            {
+                ResultText.Text = $"Your total case value: €{total:F2}";
+            }
         }
+
+       
     }
 
     public class CaseItem
